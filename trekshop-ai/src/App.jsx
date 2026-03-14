@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LandingScreen } from './screens/LandingScreen';
 import { ChatScreen } from './screens/ChatScreen';
+import { CheckoutScreen } from './screens/CheckoutScreen';
 import { PaymentScreen } from './screens/PaymentScreen';
 import { SuccessScreen } from './screens/SuccessScreen';
 
@@ -8,6 +9,7 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState('landing');
   const [showChat, setShowChat] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [orderData, setOrderData] = useState(null);
 
   const handleOpenChat = () => {
     setShowChat(true);
@@ -29,12 +31,19 @@ function App() {
     }
   };
 
-  const handleProceedToCheckout = () => {
+  const handleProceedToCheckout = (data) => {
+    setOrderData(data);
     setShowChat(false);
+    setCurrentScreen('checkout');
+  };
+
+  const handleGoToPayment = (completeOrderData) => {
+    setOrderData(completeOrderData);
     setCurrentScreen('payment');
   };
 
-  const handlePaymentComplete = () => {
+  const handlePaymentComplete = (paymentResult) => {
+    setOrderData(prev => ({ ...prev, ...paymentResult }));
     setShowSuccess(true);
   };
 
@@ -61,7 +70,7 @@ function App() {
             <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50"></div>
 
             {/* Screen Content */}
-            <div className="w-full h-full bg-white overflow-hidden">
+            <div className="w-full h-full bg-white overflow-y-auto">
               {currentScreen === 'landing' && (
                 <LandingScreen
                   onOpenChat={handleOpenChat}
@@ -69,9 +78,18 @@ function App() {
                 />
               )}
 
+              {currentScreen === 'checkout' && (
+                <CheckoutScreen
+                  orderData={orderData}
+                  onBack={() => setCurrentScreen('landing')}
+                  onProceedToPayment={handleGoToPayment}
+                />
+              )}
+
               {currentScreen === 'payment' && (
                 <PaymentScreen
-                  onBack={() => setCurrentScreen('landing')}
+                  orderData={orderData}
+                  onBack={() => setCurrentScreen('checkout')}
                   onPaymentComplete={handlePaymentComplete}
                 />
               )}
@@ -88,6 +106,7 @@ function App() {
               {/* Success Overlay */}
               {showSuccess && (
                 <SuccessScreen
+                  orderData={orderData}
                   onClose={() => setShowSuccess(false)}
                   onContinue={handleContinueBrowsing}
                 />
@@ -98,6 +117,43 @@ function App() {
 
         {/* Phone Shadow */}
         <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-[300px] h-[20px] bg-black/30 rounded-full blur-xl"></div>
+      </div>
+
+      {/* Demo Navigation Helper */}
+      <div className="fixed top-4 right-4 z-[60] bg-white rounded-lg shadow-lg p-3 text-xs space-y-2 hidden md:block">
+        <p className="font-bold text-gray-700">Demo Navigation:</p>
+        <div className="flex flex-col gap-1">
+          <button
+            onClick={() => setCurrentScreen('landing')}
+            className={`px-3 py-1 rounded text-left ${currentScreen === 'landing' ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
+          >
+            1. Landing Page
+          </button>
+          <button
+            onClick={() => setShowChat(true)}
+            className={`px-3 py-1 rounded text-left ${showChat ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
+          >
+            2. AI Chat
+          </button>
+          <button
+            onClick={() => { setShowChat(false); setCurrentScreen('checkout'); }}
+            className={`px-3 py-1 rounded text-left ${currentScreen === 'checkout' ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
+          >
+            3. Checkout
+          </button>
+          <button
+            onClick={() => { setShowChat(false); setCurrentScreen('payment'); }}
+            className={`px-3 py-1 rounded text-left ${currentScreen === 'payment' && !showSuccess ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
+          >
+            4. Payment
+          </button>
+          <button
+            onClick={() => setShowSuccess(true)}
+            className={`px-3 py-1 rounded text-left ${showSuccess ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
+          >
+            5. Success
+          </button>
+        </div>
       </div>
     </div>
   );

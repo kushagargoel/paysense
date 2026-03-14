@@ -18,6 +18,7 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [showDiscount, setShowDiscount] = useState(false);
   const [discountInfo, setDiscountInfo] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const messagesEndRef = useRef(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -144,7 +145,7 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
 
     // If proceed to checkout
     if (response.stage === 'proceed_checkout') {
-      setTimeout(() => onProceedToCheckout?.(), 1000);
+      setTimeout(() => handleProceedToCheckout(), 1000);
     }
   };
 
@@ -171,6 +172,7 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   };
 
   const handleProductSelect = (product) => {
+    setSelectedProduct(product);
     // Clear recommendations and upsell products immediately
     setRecommendations([]);
     setUpsellProducts([]);
@@ -204,7 +206,34 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   };
 
   const handleProceedToCheckout = () => {
-    onProceedToCheckout?.();
+    // Resolve the product — selectedProduct, or fallback to first recommendation/upsell
+    const product = selectedProduct
+      || recommendations[0]
+      || upsellProducts[0]
+      || null;
+
+    const orderData = {
+      product,
+      originalPrice: product?.price || 0,
+      finalPrice: product?.discountedPrice || product?.price || 0,
+      discount: discountInfo?.deals?.[0] || null,
+    };
+
+    // If discount was shown, use the discount info for pricing
+    if (showDiscount && discountInfo?.deals?.length > 0) {
+      const deal = discountInfo.deals[0];
+      const originalPrice = product?.price || 0;
+      const discountAmount = Math.min(
+        originalPrice * (deal.discount_percent || 10) / 100,
+        deal.max_discount || 600
+      );
+      orderData.originalPrice = originalPrice;
+      orderData.finalPrice = Math.round(originalPrice - discountAmount);
+      orderData.savings = Math.round(discountAmount);
+      orderData.dealName = deal.name;
+    }
+
+    onProceedToCheckout?.(orderData);
   };
 
   return (

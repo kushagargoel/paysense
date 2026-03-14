@@ -1,7 +1,12 @@
 import { useEffect } from 'react';
 import { SmartToyIcon, CloseIcon, CheckCircleIcon } from '../components/Icons';
 
-export const SuccessScreen = ({ onClose, onContinue }) => {
+export const SuccessScreen = ({ orderData, onClose, onContinue }) => {
+  const product = orderData?.product;
+  const finalPrice = orderData?.finalPrice || orderData?.amount || 4900;
+  const productName = product?.name || 'your item';
+  const orderId = orderData?.orderId || '#DEC-' + Math.floor(Math.random() * 999999);
+  const txnRef = orderData?.orderId ? `PL-${orderData.orderId.slice(0, 12)}` : 'PL-TXN-003942';
   // Auto-close after 5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,18 +77,18 @@ export const SuccessScreen = ({ onClose, onContinue }) => {
 
           <h1 className="text-2xl font-bold mb-4">Payment Successful</h1>
           <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-            Payment of <span className="font-bold text-gray-900">₹4,900</span> confirmed! Your <span className="font-bold text-gray-900">Trek-500s</span> are on their way.<br />Happy trekking! 🏔️
+            Payment of <span className="font-bold text-gray-900">{finalPrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}</span> confirmed! Your <span className="font-bold text-gray-900">{productName}</span> is on the way.<br />Happy trekking!
           </p>
 
           {/* Order Receipt Card */}
           <div className="w-full bg-gray-50 rounded-xl p-6 border border-gray-100 text-left mb-8">
             <div className="flex justify-between mb-4">
               <span className="text-sm text-gray-500">Order ID</span>
-              <span className="text-sm font-mono font-bold">#DEC-987654</span>
+              <span className="text-sm font-mono font-bold">{orderId}</span>
             </div>
             <div className="flex justify-between mb-4">
               <span className="text-sm text-gray-500">Transaction Ref</span>
-              <span className="text-sm font-mono">PL-TXN-003942</span>
+              <span className="text-sm font-mono">{txnRef}</span>
             </div>
             <div className="flex justify-between border-t border-gray-200 pt-4 items-center">
               <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Processed by</span>

@@ -1,15 +1,59 @@
 import { useState } from 'react';
-import { ArrowBackIcon, MoreVertIcon, WalletIcon, ShoppingCartCheckoutIcon, CloseIcon, SmartToyIcon } from '../components/Icons';
+import { ArrowBackIcon, MoreVertIcon, WalletIcon, ShoppingCartCheckoutIcon, CloseIcon } from '../components/Icons';
 
-export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
+const API_BASE = 'http://localhost:8000';
+
+export const PaymentScreen = ({ orderData, onBack, onPaymentComplete }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handlePay = () => {
+  const product = orderData?.product;
+  const finalPrice = orderData?.finalPrice || product?.price || 0;
+  const customer = orderData?.customer || {};
+  const productName = product?.name || 'Product';
+  const emiPerMonth = Math.ceil(finalPrice / 6);
+
+  const handlePay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: finalPrice,
+          customer_name: customer.name || 'Customer',
+          customer_email: customer.email || '',
+          customer_phone: customer.phone || '',
+          description: `PaySense — ${productName}`,
+        }),
+      });
+
+      const result = await resp.json();
+
+      if (result.error) {
+        setError(result.error);
+        setIsProcessing(false);
+        return;
+      }
+
+      // If Pine Labs returned a redirect URL, open it
+      if (result.redirect_url) {
+        window.open(result.redirect_url, '_blank');
+      }
+
+      // Pass payment result to success screen
+      onPaymentComplete?.({
+        orderId: result.order_id || result.id,
+        amount: result.amount,
+        status: result.status,
+        redirectUrl: result.redirect_url,
+      });
+    } catch (err) {
+      setError('Could not connect to payment server. Make sure the backend is running on port 8000.');
       setIsProcessing(false);
-      onPaymentComplete?.();
-    }, 2000);
+    }
   };
 
   return (
@@ -27,14 +71,16 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
 
       {/* Split Screen Layout */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Side: Ghosted Product Page (40%) */}
+        {/* Left Side: Product Preview (40%) */}
         <div className="w-2/5 p-4 flex flex-col gap-4 blur-ghost pointer-events-none bg-white/50">
           <div className="w-full aspect-square rounded-xl bg-gray-200 relative overflow-hidden">
-            <img
-              src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=300&fit=crop"
-              alt="Trek-500 Boots"
-              className="object-cover w-full h-full"
-            />
+            {product?.image && (
+              <img
+                src={product.image}
+                alt={productName}
+                className="object-cover w-full h-full"
+              />
+            )}
           </div>
           <div className="space-y-2">
             <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
@@ -65,7 +111,7 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
             <div className="flex flex-col gap-2 max-w-[90%]">
               <div className="bg-primary/10 p-4 rounded-2xl rounded-tl-none border border-primary/20">
                 <p className="text-sm leading-relaxed">
-                  I've prepared the payment for your <b>Forclaz Trek-500 Boots</b>. Everything is pre-filled. You can pay instantly using UPI or scan the code below.
+                  I've prepared the payment for your <b>{productName}</b>. Everything is pre-filled. You can pay instantly using UPI or scan the code below.
                 </p>
               </div>
             </div>
@@ -75,7 +121,9 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
               <div className="p-5 border-b border-gray-100 flex justify-between items-center">
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase tracking-tight">Total Amount</p>
-                  <p className="text-2xl font-bold text-gray-900">₹4,900.00</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {finalPrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 })}
+                  </p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <ShoppingCartCheckoutIcon className="h-5 w-5 text-primary" />
@@ -85,7 +133,6 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
                 {/* QR Code Section */}
                 <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                   <div className="bg-white p-3 rounded-lg mb-2 shadow-sm">
-                    {/* QR Code SVG */}
                     <svg className="w-32 h-32" viewBox="0 0 100 100">
                       <rect fill="white" width="100" height="100"/>
                       <rect fill="black" x="10" y="10" width="25" height="25"/>
@@ -128,6 +175,13 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
                   <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Scan to pay with any UPI App</p>
                 </div>
 
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+
                 {/* Main Action Button */}
                 <button
                   onClick={handlePay}
@@ -137,7 +191,7 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
                   {isProcessing ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Processing...
+                      Creating Payment...
                     </>
                   ) : (
                     <>
@@ -153,7 +207,7 @@ export const PaymentScreen = ({ onBack, onPaymentComplete }) => {
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    No-cost EMI also available from ₹816/mo
+                    No-cost EMI also available from {emiPerMonth.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}/mo
                   </p>
                   <div className="flex items-center gap-1 opacity-60 py-2">
                     <span className="text-[10px] font-bold text-gray-500 uppercase">Secured by</span>
