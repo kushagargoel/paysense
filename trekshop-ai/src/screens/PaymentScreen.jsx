@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowBackIcon, MoreVertIcon, WalletIcon, ShoppingCartCheckoutIcon, CloseIcon } from '../components/Icons';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '/api';
 
 export const PaymentScreen = ({ orderData, onBack, onPaymentComplete }) => {
   const [isProcessing, setIsProcessing] = useState(false);
