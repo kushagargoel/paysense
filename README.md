@@ -13,10 +13,14 @@ We’ve built a three-agent relay that handles the entire lifecycle of a purchas
 
 
 Tech Stack & Implementation
-LLM Orchestration: Powered by AWS Bedrock (Claude Sonnet). We used a multi-persona system prompt architecture to handle agent hand-offs.
-A2A Protocol: Agents communicate via a structured JSON Schema to reach a "consensus" state.
-Real-time Observability: Built a Socket.io bridge to stream the "Agent Thinking" (Chain-of-Thought) from Bedrock directly to a frontend terminal, providing 100% transparency into the negotiation logic.
-Payments: Integrated Pine Labs Online APIs to generate dynamic payment links where the amount and emi_tenure are injected programmatically post-negotiation.
+
+>> LLM Orchestration: Powered by AWS Bedrock (Claude Sonnet). We used a multi-persona system prompt architecture to handle agent hand-offs.
+
+>> A2A (Agent-to-Agent) Protocol: Agents communicate via a structured JSON Schema to reach a "consensus" state.
+
+>> Real-time Observability: Built a Socket.io bridge to stream the "Agent Thinking" (Chain-of-Thought) from Bedrock directly to a frontend terminal, providing 100% transparency into the negotiation logic.
+
+>> Payments: Integrated Pine Labs Online APIs to generate dynamic payment links where the amount and emi_tenure are injected programmatically post-negotiation.
 
 
 Impact that our tool creates:
