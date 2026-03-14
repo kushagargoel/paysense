@@ -1,7 +1,7 @@
 // LLM Service - Real Bedrock Integration via Backend API
 // Set USE_MOCK=true in .env to use mock responses instead of calling the API
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 // Import mock data as fallback

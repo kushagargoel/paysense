@@ -1,0 +1,37 @@
+{
+  "payment_links": [
+    {
+      "id": "v1-260314110928-aa-p3mpsr",
+      "order_id": "v1-260314110928-aa-p3mpsr",
+      "merchant_order_reference": "PS_20260314163928_Rahul",
+      "amount": 4499.0,
+      "customer_name": "Rahul Dravid",
+      "description": "PaySense \u2014 Forclaz MT100 Trekking Boots",
+      "status": "CREATED",
+      "redirect_url": "https://pluraluat.v2.pinepg.in/api/v3/checkout-bff/redirect/checkout?token=V3_iwB9g%2B4kHHWAX81jJP7EP%2BXDcXRlrYlv5exbUKKvHRRpKilN%2BbAsvgQLBJVNCUwa",
+      "created_at": "2026-03-14T16:39:28.751616"
+    },
+    {
+      "id": "v1-260314111138-aa-ac5uUz",
+      "order_id": "v1-260314111138-aa-ac5uUz",
+      "merchant_order_reference": "PS_20260314164138_diwaehdl",
+      "amount": 3999.0,
+      "customer_name": "diwaehdl",
+      "description": "PaySense \u2014 Quechua SH100 Warm Boots",
+      "status": "CREATED",
+      "redirect_url": "https://pluraluat.v2.pinepg.in/api/v3/checkout-bff/redirect/checkout?token=V3_iwB9g%2B4kHHWAX81jJP7EPygP39JpjOyYswqIhOSWUATwcj%2FhNVYmfuvuN65TIvW9",
+      "created_at": "2026-03-14T16:41:38.899648"
+    },
+    {
+      "id": "v1-260314111437-aa-wKlREY",
+      "order_id": "v1-260314111437-aa-wKlREY",
+      "merchant_order_reference": "PS_20260314164437_Rahul",
+      "amount": 4499.0,
+      "customer_name": "Rahul Dravid",
+      "description": "PaySense \u2014 Forclaz MT100 Trekking Boots",
+      "status": "CREATED",
+      "redirect_url": "https://pluraluat.v2.pinepg.in/api/v3/checkout-bff/redirect/checkout?token=V3_iwB9g%2B4kHHWAX81jJP7EPzCDkW3xD3w8v5f1hDV3s2nQqFuVGJOEpyLWEOgMRO3h",
+      "created_at": "2026-03-14T16:44:37.648666"
+    }
+  ]
+}
