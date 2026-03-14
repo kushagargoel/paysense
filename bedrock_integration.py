@@ -1,4 +1,5 @@
 import os
+import json
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
@@ -7,34 +8,45 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Create an Amazon Bedrock Runtime client
-# boto3 will automatically pick up AWS credentials from environment variables
 brt = boto3.client(
     "bedrock-runtime",
     region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
 )
 
-# Set the model ID, e.g., Claude 3 Opus
-model_id = "global.anthropic.claude-sonnet-4-6"
+# Set the model ID - try different formats if one fails
+model_id = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
 
-# Start a conversation with the user message.
-user_message = "Hello"
-conversation = [
-    {
-        "role": "user",
-        "content": [{"text": user_message}],
-    }
-]
+# Prepare the request body using Messages API format
+body = {
+    "anthropic_version": "bedrock-2023-05-31",
+    "max_tokens": 512,
+    "system": "You are a helpful AI assistant.",
+    "messages": [
+        {
+            "role": "user",
+            "content": "Hello, please introduce yourself as an AI assistant."
+        }
+    ],
+    "temperature": 0.7,
+}
 
 try:
-    # Send the message to the model, using a basic inference configuration.
-    response = brt.converse(
+    # Call Bedrock using invoke_model with Messages API
+    response = brt.invoke_model(
         modelId=model_id,
-        messages=conversation,
-        inferenceConfig={"maxTokens": 512},
+        body=json.dumps(body)
     )
-    # Extract and print the response text.
-    response_text = response["output"]["message"]["content"][0]["text"]
-    print(response_text)
+
+    # Parse the response
+    response_body = json.loads(response['body'].read())
+    content_blocks = response_body.get('content', [])
+    if content_blocks and len(content_blocks) > 0:
+        print(content_blocks[0].get('text', '').strip())
+
 except (ClientError, Exception) as e:
     print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
+    print("\nTip: Make sure you have the correct model ID. Try:")
+    print("  - anthropic.claude-3-sonnet-20240229-v1:0")
+    print("  - anthropic.claude-3-haiku-20240307-v1:0")
+    print("  - anthropic.claude-3-opus-20240229-v1:0")
     exit(1)

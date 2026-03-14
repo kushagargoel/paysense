@@ -1,6 +1,10 @@
-// LLM Service - Mock Bedrock Integration
-// In production, this would call the Python backend with Bedrock
+// LLM Service - Real Bedrock Integration via Backend API
+// Set USE_MOCK=true in .env to use mock responses instead of calling the API
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+
+// Import mock data as fallback
 import dummyData from '../../dummy_data.json';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -31,133 +35,236 @@ export const SUGGESTIONS = {
   ]
 };
 
-const extractCategory = (message) => {
-  const lowerMsg = message.toLowerCase();
-  const categories = {
-    'Footwear': ['shoe', 'boot', 'footwear', 'walking', 'trekking shoe', 'hiking boot', 'sandal'],
-    'Backpacks': ['backpack', 'bag', 'rucksack', '50l', '60l', '40l'],
-    'Clothing': ['jacket', 'rain jacket', 'down jacket', 'clothing', 'apparel', 'pant', 'shirt'],
-    'Accessories': ['pole', 'stick', 'sock', 'accessory', 'accessories', 'water bottle', 'headlamp']
-  };
-
-  for (const [category, keywords] of Object.entries(categories)) {
-    if (keywords.some(kw => lowerMsg.includes(kw))) {
-      return category;
-    }
-  }
-  return null;
-};
-
-const extractBrand = (message) => {
-  const lowerMsg = message.toLowerCase();
-  if (lowerMsg.includes('forclaz')) return 'Forclaz';
-  if (lowerMsg.includes('quechua')) return 'Quechua';
-  return null;
-};
-
-const extractBudget = (message) => {
-  const match = message.match(/(\d+)[kK]?/);
-  if (match) {
-    let budget = parseInt(match[1]);
-    if (budget < 100) budget *= 1000;
-    return budget;
-  }
-  return null;
-};
-
-// Find closest products when no exact budget match
-const findUpsellProducts = (preferences) => {
-  let filtered = [...dummyData.products];
-
-  // Filter by category
-  if (preferences.category) {
-    filtered = filtered.filter(p =>
-      p.category.toLowerCase() === preferences.category.toLowerCase()
-    );
-  }
-
-  // Filter by brand
-  if (preferences.brand) {
-    filtered = filtered.filter(p =>
-      p.name.toLowerCase().includes(preferences.brand.toLowerCase())
-    );
-  }
-
-  // Sort by price difference from budget (ascending)
-  // Products slightly above budget will appear first
-  filtered.sort((a, b) => {
-    const diffA = a.price - preferences.budget;
-    const diffB = b.price - preferences.budget;
-    // Prefer products slightly above budget over way above
-    if (diffA > 0 && diffB > 0) return diffA - diffB;
-    if (diffA > 0) return -1; // a is above budget, prefer it
-    if (diffB > 0) return 1;
-    return Math.abs(diffA) - Math.abs(diffB);
-  });
-
-  return filtered.slice(0, 3);
-};
-
-// Find products with best EMI/deal options
-const findProductsWithFinancing = (preferences) => {
-  let products = findUpsellProducts(preferences);
-
-  // Add financing info to each product
-  return products.map(p => {
-    const emiAmount = Math.ceil(p.price / 6);
-    const discountPercent = p.promo_eligible ? 10 : 0;
-    const discountedPrice = p.promo_eligible ? Math.floor(p.price * 0.9) : p.price;
-
-    return {
-      ...p,
-      emiAmount,
-      discountPercent,
-      discountedPrice,
-      priceDifference: p.price - preferences.budget
-    };
-  });
-};
-
-// Filter products based on preferences
-const filterProducts = (preferences) => {
-  let filtered = [...dummyData.products];
-
-  if (preferences.category) {
-    filtered = filtered.filter(p =>
-      p.category.toLowerCase() === preferences.category.toLowerCase()
-    );
-  }
-
-  if (preferences.brand) {
-    filtered = filtered.filter(p =>
-      p.name.toLowerCase().includes(preferences.brand.toLowerCase())
-    );
-  }
-
-  if (preferences.budget) {
-    filtered = filtered.filter(p => p.price <= preferences.budget);
-  }
-
-  filtered.sort((a, b) => (b.rating * b.reviews) - (a.rating * b.reviews));
-
-  return filtered.slice(0, 3);
+// Helper to convert conversation state to message history for API
+const buildMessageHistory = (conversation) => {
+  // This would track the actual message history if needed
+  // For now, the backend maintains state via the conversation object
+  return [];
 };
 
 export const llmService = {
   async getGreeting() {
-    await delay(600);
-    return {
-      message: "Hi! I'm your Trekking Concierge. What are you looking for today?",
-      stage: 'category_query',
-      suggestions: SUGGESTIONS.category
-    };
+    if (USE_MOCK) {
+      await delay(600);
+      return {
+        message: "Hi! I'm your Trekking Concierge. What are you looking for today?",
+        stage: 'category_query',
+        suggestions: SUGGESTIONS.category
+      };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/greeting`);
+      const data = await response.json();
+
+      if (data.success) {
+        return {
+          message: data.message,
+          stage: data.stage || 'greeting',
+          suggestions: SUGGESTIONS.category
+        };
+      }
+      throw new Error(data.error || 'Failed to get greeting');
+    } catch (error) {
+      console.error('Error getting greeting:', error);
+      // Fallback to mock
+      return {
+        message: "Hi! I'm your Trekking Concierge. What are you looking for today?",
+        stage: 'category_query',
+        suggestions: SUGGESTIONS.category
+      };
+    }
   },
 
   async processMessage(message, conversationHistory) {
+    if (USE_MOCK) {
+      return this._processMockMessage(message, conversationHistory);
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          history: buildMessageHistory(conversationHistory),
+          stage: conversationHistory.stage,
+          preferences: conversationHistory.preferences
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return {
+          message: data.message,
+          stage: data.stage || 'conversation',
+          preferences: data.preferences || conversationHistory.preferences || {},
+          suggestions: data.suggestions || this._getSuggestionsForStage(data.stage),
+          products: data.products || null
+        };
+      }
+      throw new Error(data.error || 'Failed to process message');
+    } catch (error) {
+      console.error('Error processing message:', error);
+      // Fallback to mock
+      return this._processMockMessage(message, conversationHistory);
+    }
+  },
+
+  _getSuggestionsForStage(stage) {
+    switch (stage) {
+      case 'category_query':
+        return SUGGESTIONS.category;
+      case 'brand_query':
+        return SUGGESTIONS.brand;
+      case 'budget_query':
+        return SUGGESTIONS.budget;
+      case 'show_recommendations':
+        return [
+          { label: '✅ Check for Discounts', value: 'discounts' },
+          { label: '💳 EMI Options', value: 'emi' },
+          { label: 'Proceed to Buy', value: 'buy' }
+        ];
+      default:
+        return [];
+    }
+  },
+
+  async checkDiscounts(productIds) {
+    if (USE_MOCK) {
+      await delay(1200);
+
+      const eligibleDeals = [];
+      for (const deal of Object.values(dummyData.deals)) {
+        const eligibleProducts = productIds.filter(id =>
+          deal.eligible_products.includes(id)
+        );
+        if (eligibleProducts.length > 0) {
+          eligibleDeals.push({ ...deal, eligibleProducts });
+        }
+      }
+
+      return {
+        deals: eligibleDeals,
+        processing: [
+          "[Discovery Agent] → Handoff to Sales Agent",
+          "[Checking] Merchant promo budget...",
+          "[Checking] User eligibility...",
+          "[Checking] Inventory pressure...",
+          `[Result] ${eligibleDeals.length > 0 ? 'Discounts unlocked ✓' : 'Standard pricing applied'}`
+        ]
+      };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/check-discounts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productIds }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return {
+          deals: data.deals,
+          processing: data.processing
+        };
+      }
+      throw new Error(data.error || 'Failed to check discounts');
+    } catch (error) {
+      console.error('Error checking discounts:', error);
+      // Fallback to mock
+      const eligibleDeals = [];
+      for (const deal of Object.values(dummyData.deals)) {
+        const eligibleProducts = productIds.filter(id =>
+          deal.eligible_products.includes(id)
+        );
+        if (eligibleProducts.length > 0) {
+          eligibleDeals.push({ ...deal, eligibleProducts });
+        }
+      }
+      return {
+        deals: eligibleDeals,
+        processing: [
+          "[Discovery Agent] → Handoff to Sales Agent",
+          "[Checking] Merchant promo budget...",
+          "[Checking] User eligibility...",
+          "[Checking] Inventory pressure...",
+          `[Result] ${eligibleDeals.length > 0 ? 'Discounts unlocked ✓' : 'Standard pricing applied'}`
+        ]
+      };
+    }
+  },
+
+  // Mock implementation for fallback
+  async _processMockMessage(message, conversationHistory) {
     await delay(800);
 
     const currentStage = conversationHistory.stage || 'category_query';
     const preferences = { ...conversationHistory.preferences } || {};
+
+    const extractCategory = (msg) => {
+      const lowerMsg = msg.toLowerCase();
+      const categories = {
+        'Footwear': ['shoe', 'boot', 'footwear', 'walking', 'trekking shoe', 'hiking boot', 'sandal'],
+        'Backpacks': ['backpack', 'bag', 'rucksack', '50l', '60l', '40l'],
+        'Clothing': ['jacket', 'rain jacket', 'down jacket', 'clothing', 'apparel', 'pant', 'shirt'],
+        'Accessories': ['pole', 'stick', 'sock', 'accessory', 'accessories', 'water bottle', 'headlamp']
+      };
+
+      for (const [category, keywords] of Object.entries(categories)) {
+        if (keywords.some(kw => lowerMsg.includes(kw))) {
+          return category;
+        }
+      }
+      return null;
+    };
+
+    const extractBrand = (msg) => {
+      const lowerMsg = msg.toLowerCase();
+      if (lowerMsg.includes('forclaz')) return 'Forclaz';
+      if (lowerMsg.includes('quechua')) return 'Quechua';
+      return null;
+    };
+
+    const extractBudget = (msg) => {
+      const match = msg.match(/(\d+)[kK]?/);
+      if (match) {
+        let budget = parseInt(match[1]);
+        if (budget < 100) budget *= 1000;
+        return budget;
+      }
+      return null;
+    };
+
+    const filterProducts = (prefs) => {
+      let filtered = [...dummyData.products];
+
+      if (prefs.category) {
+        filtered = filtered.filter(p =>
+          p.category.toLowerCase() === prefs.category.toLowerCase()
+        );
+      }
+
+      if (prefs.brand) {
+        filtered = filtered.filter(p =>
+          p.name.toLowerCase().includes(prefs.brand.toLowerCase())
+        );
+      }
+
+      if (prefs.budget) {
+        filtered = filtered.filter(p => p.price <= prefs.budget);
+      }
+
+      filtered.sort((a, b) => (b.rating * b.reviews) - (a.rating * b.reviews));
+      return filtered.slice(0, 3);
+    };
 
     switch (currentStage) {
       case 'category_query': {
@@ -186,7 +293,7 @@ export const llmService = {
         }
         if (brand || message.toLowerCase().includes('no') || message.toLowerCase().includes('any')) {
           return {
-            message: `Perfect! What's your budget for ${preferences.category.toLowerCase()}?`,
+            message: `Perfect! What's your budget for ${preferences.category?.toLowerCase() || 'these items'}?`,
             stage: 'budget_query',
             preferences,
             suggestions: SUGGESTIONS.budget
@@ -200,37 +307,23 @@ export const llmService = {
         };
       }
 
-      case 'budget_query':
-      case 'adjust_budget': {
+      case 'budget_query': {
         const budget = extractBudget(message);
         if (budget) {
           preferences.budget = budget;
-          preferences.budgetAdjusted = currentStage === 'adjust_budget';
           const recommendations = filterProducts(preferences);
 
           if (recommendations.length === 0) {
-            // No products in budget - upsell mode
-            const upsellProducts = findProductsWithFinancing(preferences);
-            const lowestPrice = upsellProducts[0]?.price || 0;
-            const priceDiff = lowestPrice - budget;
-
             return {
-              message: `I couldn't find ${preferences.category.toLowerCase()} within ₹${budget.toLocaleString()}. But here are some great options just slightly above your budget:`,
-              stage: 'upsell_options',
+              message: `I couldn't find ${preferences.category?.toLowerCase() || 'items'} within ₹${budget.toLocaleString()}. Would you like to increase your budget or try a different category?`,
+              stage: 'adjust_budget',
               preferences,
-              upsellProducts,
-              suggestions: [
-                { label: `See options under ₹${Math.ceil(budget * 1.5 / 1000)}k`, value: String(Math.ceil(budget * 1.5)) },
-                { label: 'Try Different Category', value: 'change_category' },
-                { label: 'Show All Products', value: 'show_all' }
-              ]
+              suggestions: SUGGESTIONS.adjustBudget
             };
           }
 
           return {
-            message: preferences.budgetAdjusted
-              ? "Here are products within your new budget:"
-              : `Here are the best ${preferences.category.toLowerCase()} within ₹${budget.toLocaleString()}:`,
+            message: `Here are the best ${preferences.category?.toLowerCase() || 'options'} within ₹${budget.toLocaleString()}:`,
             stage: 'show_recommendations',
             preferences,
             products: recommendations
@@ -244,49 +337,7 @@ export const llmService = {
         };
       }
 
-      case 'upsell_options': {
-        // User wants to see options after upsell
-        if (message.toLowerCase().includes('show') || message.toLowerCase().includes('all')) {
-          const allProducts = findUpsellProducts(preferences);
-          return {
-            message: "Here are all available options sorted by value:",
-            stage: 'show_recommendations',
-            preferences,
-            products: allProducts
-          };
-        }
-        if (message.toLowerCase().includes('change') || message.toLowerCase().includes('category')) {
-          return {
-            message: "What category would you like to explore instead?",
-            stage: 'category_query',
-            preferences: {},
-            suggestions: SUGGESTIONS.category
-          };
-        }
-        // Try to extract new budget
-        const newBudget = extractBudget(message);
-        if (newBudget) {
-          preferences.budget = newBudget;
-          const recommendations = filterProducts(preferences);
-          if (recommendations.length > 0) {
-            return {
-              message: `Here are options within ₹${newBudget.toLocaleString()}:`,
-              stage: 'show_recommendations',
-              preferences,
-              products: recommendations
-            };
-          }
-        }
-        return {
-          message: "Let me show you all available options:",
-          stage: 'show_recommendations',
-          preferences,
-          products: findUpsellProducts(preferences)
-        };
-      }
-
       case 'show_recommendations': {
-        // Check if user selected a product
         if (message.toLowerCase().includes('interested') || message.toLowerCase().includes('this')) {
           return {
             message: "Great choice! Would you like me to check for available discounts or financing options?",
@@ -297,13 +348,6 @@ export const llmService = {
               { label: '💳 EMI Options', value: 'emi' },
               { label: 'Proceed to Buy', value: 'buy' }
             ]
-          };
-        }
-        if (message.toLowerCase().includes('discount') || message.toLowerCase().includes('yes')) {
-          return {
-            message: "Let me check for available discounts...",
-            stage: 'checking_discount',
-            preferences
           };
         }
         return {
@@ -321,18 +365,6 @@ export const llmService = {
             preferences
           };
         }
-        if (message.toLowerCase().includes('emi') || message.toLowerCase().includes('finance')) {
-          return {
-            message: "I can offer No-Cost EMI options! Pay in 6 easy installments. Would you like to proceed?",
-            stage: 'emi_options',
-            preferences,
-            suggestions: [
-              { label: '6 months EMI', value: 'emi6' },
-              { label: '12 months EMI', value: 'emi12' },
-              { label: 'Pay Full Amount', value: 'full' }
-            ]
-          };
-        }
         if (message.toLowerCase().includes('buy') || message.toLowerCase().includes('proceed')) {
           return {
             message: "Proceeding to checkout...",
@@ -341,12 +373,12 @@ export const llmService = {
           };
         }
         return {
-          message: "Would you like to check for discounts or EMI options?",
+          message: "Would you like to check for discounts?",
           stage: 'discount_query',
           preferences,
           suggestions: [
             { label: 'Check Discounts', value: 'discounts' },
-            { label: 'EMI Options', value: 'emi' }
+            { label: 'Proceed to Buy', value: 'buy' }
           ]
         };
       }
@@ -359,31 +391,6 @@ export const llmService = {
           suggestions: SUGGESTIONS.category
         };
     }
-  },
-
-  async checkDiscounts(productIds) {
-    await delay(1200);
-
-    const eligibleDeals = [];
-    for (const deal of Object.values(dummyData.deals)) {
-      const eligibleProducts = productIds.filter(id =>
-        deal.eligible_products.includes(id)
-      );
-      if (eligibleProducts.length > 0) {
-        eligibleDeals.push({ ...deal, eligibleProducts });
-      }
-    }
-
-    return {
-      deals: eligibleDeals,
-      processing: [
-        "[Discovery Agent] → Handoff to Sales Agent",
-        "[Checking] Merchant promo budget...",
-        "[Checking] User eligibility...",
-        "[Checking] Inventory pressure...",
-        `[Result] ${eligibleDeals.length > 0 ? 'Discounts unlocked ✓' : 'Standard pricing applied'}`
-      ]
-    };
   }
 };
 

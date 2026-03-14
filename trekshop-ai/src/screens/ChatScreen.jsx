@@ -83,6 +83,7 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
     setUpsellProducts([]);
     setShowDiscount(false);
     setDiscountInfo(null);
+    setSelectedProduct(null);
     startFreshChat();
   };
 
@@ -105,6 +106,10 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
     }
     setIsTyping(true);
     setSuggestions([]); // Clear suggestions while processing
+    setRecommendations([]); // Clear product tiles
+    setUpsellProducts([]); // Clear upsell tiles
+    setShowDiscount(false); // Clear discount section
+    setDiscountInfo(null);
 
     // Get LLM response
     const response = await llmService.processMessage(messageToSend, conversation);
@@ -140,6 +145,8 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
 
     // If checking discounts
     if (response.stage === 'checking_discount') {
+      setRecommendations([]); // Hide product tiles when checking discounts
+      setUpsellProducts([]);
       checkForDiscounts(response.preferences.selectedProducts || ['TREK-500']);
     }
 
@@ -177,6 +184,7 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
     setRecommendations([]);
     setUpsellProducts([]);
     setSuggestions([]);
+    setSelectedProduct(product);
 
     setConversation(prev => ({
       ...prev,
@@ -302,8 +310,8 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
             </div>
           )}
 
-          {/* Product Recommendations */}
-          {recommendations.length > 0 && (
+          {/* Product Recommendations - Hide when showing discount */}
+          {recommendations.length > 0 && !showDiscount && (
             <div className="space-y-3 animate-fadeIn">
               <p className="text-sm text-gray-600 font-medium">Recommended for you:</p>
               {recommendations.map(product => (
@@ -394,6 +402,18 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
                 <div className="text-slate-400 italic">Negotiation complete in 0.8s</div>
               </div>
 
+              {/* Selected Product Summary */}
+              {selectedProduct && (
+                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex items-center">
+                  <img src={selectedProduct.image} alt={selectedProduct.name} className="w-20 h-20 object-cover bg-gray-100" />
+                  <div className="p-3 flex-1">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold">{selectedProduct.category}</p>
+                    <h3 className="font-bold text-sm text-gray-900 leading-tight">{selectedProduct.name}</h3>
+                    <p className="text-decathlonBlue font-bold text-sm mt-0.5">₹{selectedProduct.price.toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Discount Result */}
               {discountInfo.deals.length > 0 ? (
                 <>
@@ -405,17 +425,17 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-[10px] uppercase text-primary/70 font-bold">Final Price</p>
-                          <p className="text-xl font-bold text-gray-900">₹4,900</p>
+                          <p className="text-xl font-bold text-gray-900">₹{Math.round(selectedProduct?.price * (1 - discountInfo.deals[0].discount_percent / 100)).toLocaleString()}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] line-through text-gray-400">₹5,499</p>
-                          <p className="text-[10px] text-green-600 font-bold">Saved ₹599</p>
+                          <p className="text-[10px] line-through text-gray-400">₹{selectedProduct?.price?.toLocaleString()}</p>
+                          <p className="text-[10px] text-green-600 font-bold">Saved ₹{Math.round(selectedProduct?.price * discountInfo.deals[0].discount_percent / 100).toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
                   </ChatMessage>
 
-                  {/* CTA */}
+                  {/* CTA - Only Proceed to Checkout */}
                   <button
                     onClick={handleProceedToCheckout}
                     className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
@@ -431,19 +451,16 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
                   <ChatMessage isUser={false}>
                     <p className="text-sm">No additional discounts available, but you can still use No-Cost EMI options!</p>
                   </ChatMessage>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleProceedToCheckout}
-                      className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition-all"
-                    >
-                      Buy Now
-                    </button>
-                    <button
-                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-all"
-                    >
-                      💳 EMI Options
-                    </button>
-                  </div>
+                  {/* CTA - Only Proceed to Checkout */}
+                  <button
+                    onClick={handleProceedToCheckout}
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
+                  >
+                    Proceed to Checkout
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </button>
                 </>
               )}
             </div>
