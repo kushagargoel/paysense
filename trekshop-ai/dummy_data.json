@@ -1,0 +1,155 @@
+{
+  "store": {
+    "name": "Decathlon",
+    "category": "Mountain Trekking",
+    "tagline": "Equip yourself for the great outdoors"
+  },
+  "products": [
+    {
+      "id": "TREK-100",
+      "name": "Forclaz MT100 Trekking Boots",
+      "aliases": ["trek 100", "mt100", "forclaz 100", "entry boots", "basic trekking shoes"],
+      "price": 4499,
+      "category": "Footwear",
+      "image": "https://contents.mediadecathlon.com/p2397280/k$1d29dece69fb7f35e84ed9a4fbcfce0d/trekking-boots.jpg",
+      "description": "Great entry-level grip for well-marked paths. Ideal for day treks and moderate terrain.",
+      "features": ["Grippy sole", "Breathable mesh", "Cushioned insole", "Lightweight (580g)"],
+      "best_for": "Day treks, well-marked trails, beginners",
+      "rating": 4.3,
+      "reviews": 1250,
+      "stock": 85,
+      "promo_eligible": false
+    },
+    {
+      "id": "TREK-500",
+      "name": "Forclaz MT500 Trekking Boots",
+      "aliases": ["trek 500", "mt500", "forclaz 500", "waterproof boots", "ebc shoes"],
+      "price": 5499,
+      "category": "Footwear",
+      "image": "https://contents.mediadecathlon.com/p2397281/k$waterproof-trek-boots/trekking-boots-500.jpg",
+      "description": "Ankle support for Khumbu Icefall. Waterproof membrane for snow and rain.",
+      "features": ["Waterproof membrane", "Ankle support", "Vibram sole", "Thermal insulation", "800g"],
+      "best_for": "Everest Base Camp, Annapurna Circuit, high-altitude treks",
+      "rating": 4.7,
+      "reviews": 890,
+      "stock": 120,
+      "promo_eligible": true
+    },
+    {
+      "id": "TREK-700",
+      "name": "Forclaz MT700 Mountaineering Boots",
+      "aliases": ["trek 700", "mt700", "mountaineering", "alpine boots", "crampon compatible"],
+      "price": 8999,
+      "category": "Footwear",
+      "image": "https://contents.mediadecathlon.com/p2397282/k$mountaineering-boots/mt700.jpg",
+      "description": "Professional-grade mountaineering boots. Crampon-compatible, fully insulated.",
+      "features": ["Crampon compatible", "Full insulation", "Carbon fiber shank", "Gore-Tex lining", "1200g"],
+      "best_for": "Technical mountaineering, glacier crossings, winter expeditions",
+      "rating": 4.8,
+      "reviews": 340,
+      "stock": 25,
+      "promo_eligible": true
+    },
+    {
+      "id": "SHOE-WALK",
+      "name": "Quechua Waterproof Walking Shoes",
+      "aliases": ["walking shoes", "quechua shoes", "light hiking", "waterproof shoes"],
+      "price": 3299,
+      "category": "Footwear",
+      "image": "https://contents.mediadecathlon.com/p2397283/k$walking-shoes/quechua-walk.jpg",
+      "description": "Lightweight waterproof shoes for casual hikes and travel.",
+      "features": ["Waterproof", "Lightweight (420g)", "Cushioned", "Flexible sole"],
+      "best_for": "Casual hikes, travel, daily walks",
+      "rating": 4.1,
+      "reviews": 2100,
+      "stock": 200,
+      "promo_eligible": false
+    },
+    {
+      "id": "BP-50L",
+      "name": "Forclaz Mountain Trekking Backpack 50L - MT100",
+      "aliases": ["backpack", "50l", "trekking bag", "rucksack", "mt100 bag"],
+      "price": 4999,
+      "category": "Backpacks",
+      "image": "https://contents.mediadecathlon.com/p2397284/k$trekking-backpack/bp50l.jpg",
+      "description": "50-litre capacity for multi-day treks. Rain cover included.",
+      "features": ["50L capacity", "Rain cover", "Adjustable back system", "Hip belt", "1.8kg"],
+      "best_for": "Multi-day treks, EBC, Annapurna",
+      "rating": 4.5,
+      "reviews": 670,
+      "stock": 60,
+      "promo_eligible": true
+    },
+    {
+      "id": "JACKET-RAIN",
+      "name": "Forclaz Men's Trekking Down Jacket - MT100",
+      "aliases": ["jacket", "down jacket", "trekking jacket", "rain jacket", "winter jacket"],
+      "price": 5500,
+      "category": "Clothing",
+      "image": "https://contents.mediadecathlon.com/p2397285/k$down-jacket/mt100-jacket.jpg",
+      "description": "Warm down jacket for cold treks. Packs into its own pocket.",
+      "features": ["Down insulation", "Packable", "Water-repellent", "Lightweight (350g)"],
+      "best_for": "High-altitude treks, cold weather, layering",
+      "rating": 4.4,
+      "reviews": 520,
+      "stock": 90,
+      "promo_eligible": false
+    },
+    {
+      "id": "POLE-TREK",
+      "name": "Forclaz Trekking Poles - MT500 Pair",
+      "aliases": ["trekking poles", "walking sticks", "poles", "hiking poles"],
+      "price": 1999,
+      "category": "Accessories",
+      "image": "https://contents.mediadecathlon.com/p2397286/k$trekking-poles/mt500-poles.jpg",
+      "description": "Adjustable aluminium trekking poles with cork grip. Shock-absorbing.",
+      "features": ["Cork grip", "Shock absorbing", "Adjustable 110-135cm", "Pair: 480g"],
+      "best_for": "All treks, knee protection, steep descents",
+      "rating": 4.6,
+      "reviews": 890,
+      "stock": 150,
+      "promo_eligible": false
+    },
+    {
+      "id": "SOCK-TREK",
+      "name": "Quechua Trekking Socks - 2 Pack",
+      "aliases": ["socks", "trekking socks", "hiking socks", "wool socks"],
+      "price": 599,
+      "category": "Accessories",
+      "image": "https://contents.mediadecathlon.com/p2397287/k$trekking-socks/trek-socks.jpg",
+      "description": "Merino wool blend. Anti-blister, moisture-wicking.",
+      "features": ["Merino wool", "Anti-blister", "Moisture-wicking", "Reinforced heel"],
+      "best_for": "All treks, prevents blisters",
+      "rating": 4.2,
+      "reviews": 3200,
+      "stock": 500,
+      "promo_eligible": false
+    }
+  ],
+  "deals": {
+    "first_trek": {
+      "name": "First Trek Discount",
+      "description": "Special discount for first-time trekkers",
+      "discount_percent": 10,
+      "max_discount": 600,
+      "eligible_products": ["TREK-500", "TREK-700", "BP-50L"],
+      "condition": "First-time buyers or new customers"
+    },
+    "bundle_deal": {
+      "name": "Trek Bundle",
+      "description": "Buy shoes + backpack together and save",
+      "discount_percent": 12,
+      "max_discount": 800,
+      "eligible_products": ["TREK-500", "TREK-700", "BP-50L"],
+      "condition": "Must purchase 2+ items"
+    },
+    "clearance": {
+      "name": "Season End Clearance",
+      "description": "End-of-season clearance on select items",
+      "discount_percent": 20,
+      "max_discount": 1800,
+      "eligible_products": ["TREK-700"],
+      "condition": "While stocks last, inventory > 20 units"
+    }
+  }
+}
