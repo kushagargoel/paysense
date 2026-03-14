@@ -14,11 +14,8 @@ body {
 #root {
   min-height: 100vh;
   width: 100%;
-  max-width: 430px;
   margin: 0 auto;
-  background: white;
   position: relative;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
 }
 
 .hide-scrollbar::-webkit-scrollbar {

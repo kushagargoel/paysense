@@ -44,70 +44,60 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Main Content */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4 md:p-8">
+      {/* Phone Frame */}
       <div className="relative">
-        {currentScreen === 'landing' && (
-          <LandingScreen
-            onOpenChat={handleOpenChat}
-            onNavigate={handleNavigate}
-          />
-        )}
+        {/* Phone Outer Shell */}
+        <div className="w-[375px] h-[812px] bg-gray-900 rounded-[50px] p-3 shadow-2xl">
+          {/* Power Button */}
+          <div className="absolute right-[-3px] top-[120px] w-[6px] h-[80px] bg-gray-700 rounded-r-md"></div>
+          {/* Volume Buttons */}
+          <div className="absolute left-[-3px] top-[100px] w-[6px] h-[30px] bg-gray-700 rounded-l-md"></div>
+          <div className="absolute left-[-3px] top-[150px] w-[6px] h-[60px] bg-gray-700 rounded-l-md"></div>
 
-        {currentScreen === 'payment' && (
-          <PaymentScreen
-            onBack={() => setCurrentScreen('landing')}
-            onPaymentComplete={handlePaymentComplete}
-          />
-        )}
+          {/* Phone Inner Frame */}
+          <div className="w-full h-full bg-black rounded-[40px] overflow-hidden relative">
+            {/* Dynamic Island / Notch */}
+            <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50"></div>
 
-        {/* Chat Overlay */}
-        {showChat && (
-          <ChatScreen
-            onClose={handleCloseChat}
-            onNavigate={handleNavigate}
-            onProceedToCheckout={handleProceedToCheckout}
-          />
-        )}
+            {/* Screen Content */}
+            <div className="w-full h-full bg-white overflow-hidden">
+              {currentScreen === 'landing' && (
+                <LandingScreen
+                  onOpenChat={handleOpenChat}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-        {/* Success Overlay */}
-        {showSuccess && (
-          <SuccessScreen
-            onClose={() => setShowSuccess(false)}
-            onContinue={handleContinueBrowsing}
-          />
-        )}
-      </div>
+              {currentScreen === 'payment' && (
+                <PaymentScreen
+                  onBack={() => setCurrentScreen('landing')}
+                  onPaymentComplete={handlePaymentComplete}
+                />
+              )}
 
-      {/* Demo Navigation Helper */}
-      <div className="fixed top-4 right-4 z-[60] bg-white rounded-lg shadow-lg p-3 text-xs space-y-2 hidden md:block">
-        <p className="font-bold text-gray-700">Demo Navigation:</p>
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={() => setCurrentScreen('landing')}
-            className={`px-3 py-1 rounded text-left ${currentScreen === 'landing' ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
-          >
-            1. Landing Page
-          </button>
-          <button
-            onClick={() => setShowChat(true)}
-            className={`px-3 py-1 rounded text-left ${showChat ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
-          >
-            2. AI Chat
-          </button>
-          <button
-            onClick={() => { setShowChat(false); setCurrentScreen('payment'); }}
-            className={`px-3 py-1 rounded text-left ${currentScreen === 'payment' && !showSuccess ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
-          >
-            3. Payment
-          </button>
-          <button
-            onClick={() => setShowSuccess(true)}
-            className={`px-3 py-1 rounded text-left ${showSuccess ? 'bg-decathlonBlue text-white' : 'bg-gray-100'}`}
-          >
-            4. Success
-          </button>
+              {/* Chat Overlay */}
+              {showChat && (
+                <ChatScreen
+                  onClose={handleCloseChat}
+                  onNavigate={handleNavigate}
+                  onProceedToCheckout={handleProceedToCheckout}
+                />
+              )}
+
+              {/* Success Overlay */}
+              {showSuccess && (
+                <SuccessScreen
+                  onClose={() => setShowSuccess(false)}
+                  onContinue={handleContinueBrowsing}
+                />
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Phone Shadow */}
+        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-[300px] h-[20px] bg-black/30 rounded-full blur-xl"></div>
       </div>
     </div>
   );

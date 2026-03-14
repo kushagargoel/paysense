@@ -3,6 +3,8 @@ import { CloseIcon, ChatIcon, HomeIcon, UserIcon } from '../components/Icons';
 import { ChatMessage, ChatInput } from '../components/ChatMessage';
 import { llmService } from '../services/llmService';
 
+const STORAGE_KEY = 'trekshop_conversation';
+
 export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -17,6 +19,71 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   const [showDiscount, setShowDiscount] = useState(false);
   const [discountInfo, setDiscountInfo] = useState(null);
   const messagesEndRef = useRef(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Function to start a fresh chat
+  const startFreshChat = async () => {
+    setIsTyping(true);
+    const response = await llmService.getGreeting();
+    setIsTyping(false);
+    setMessages([{ id: 1, type: 'agent', text: response.message }]);
+    setConversation({ stage: response.stage, preferences: {} });
+    setSuggestions(response.suggestions || []);
+  };
+
+  // Load conversation from localStorage on mount (runs once)
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.messages?.length > 0) {
+          if (parsed.messages) setMessages(parsed.messages);
+          if (parsed.conversation) setConversation(parsed.conversation);
+          if (parsed.recommendations) setRecommendations(parsed.recommendations);
+          if (parsed.upsellProducts) setUpsellProducts(parsed.upsellProducts);
+          if (parsed.suggestions) setSuggestions(parsed.suggestions);
+          if (parsed.showDiscount) setShowDiscount(parsed.showDiscount);
+          if (parsed.discountInfo) setDiscountInfo(parsed.discountInfo);
+        } else {
+          // Saved but empty - start fresh
+          startFreshChat();
+        }
+      } catch (e) {
+        console.error('Failed to load conversation:', e);
+        startFreshChat();
+      }
+    } else {
+      // No saved data - start fresh
+      startFreshChat();
+    }
+    setIsInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save conversation to localStorage whenever it changes (only after initialization)
+  useEffect(() => {
+    if (!isInitialized) return;
+    const data = {
+      messages,
+      conversation,
+      recommendations,
+      upsellProducts,
+      suggestions,
+      showDiscount,
+      discountInfo
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }, [messages, conversation, recommendations, upsellProducts, suggestions, showDiscount, discountInfo, isInitialized]);
+
+  const handleStartFresh = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setRecommendations([]);
+    setUpsellProducts([]);
+    setShowDiscount(false);
+    setDiscountInfo(null);
+    startFreshChat();
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,19 +92,6 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, suggestions, recommendations]);
-
-  // Initial greeting
-  useEffect(() => {
-    const initChat = async () => {
-      setIsTyping(true);
-      const response = await llmService.getGreeting();
-      setIsTyping(false);
-      setMessages([{ id: 1, type: 'agent', text: response.message }]);
-      setConversation(prev => ({ ...prev, stage: response.stage }));
-      setSuggestions(response.suggestions || []);
-    };
-    initChat();
-  }, []);
 
   const handleSend = async (overrideMessage = null) => {
     const messageToSend = overrideMessage || inputValue;
@@ -99,6 +153,11 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
     const userMessage = { id: Date.now(), type: 'user', text: suggestion.label };
     setMessages(prev => [...prev, userMessage]);
 
+    // Clear suggestions and products immediately for better UX
+    setSuggestions([]);
+    setRecommendations([]);
+    setUpsellProducts([]);
+
     // Send the value to the LLM
     handleSend(suggestion.value);
   };
@@ -112,6 +171,11 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   };
 
   const handleProductSelect = (product) => {
+    // Clear recommendations and upsell products immediately
+    setRecommendations([]);
+    setUpsellProducts([]);
+    setSuggestions([]);
+
     setConversation(prev => ({
       ...prev,
       preferences: {
@@ -127,7 +191,6 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
     }]);
 
     setIsTyping(true);
-    setSuggestions([]);
     setTimeout(async () => {
       setIsTyping(false);
       const response = await llmService.processMessage('interested', {
@@ -145,7 +208,7 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
+    <div className="absolute inset-0 z-50 flex flex-col bg-white">
       {/* Dimmed Background */}
       <div className="absolute inset-0 bg-black/40 z-0" onClick={onClose} />
 
@@ -171,9 +234,17 @@ export const ChatScreen = ({ onClose, onNavigate, onProceedToCheckout }) => {
                 <span className="text-xs text-green-500 font-semibold uppercase tracking-wider">Online & Active</span>
               </div>
             </div>
-            <button onClick={onClose} className="text-gray-400 p-2 hover:bg-gray-100 rounded-full">
-              <CloseIcon className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleStartFresh}
+                className="text-xs font-medium text-decathlonBlue hover:bg-decathlonBlue/10 px-3 py-2 rounded-full transition-colors"
+              >
+                Start Fresh
+              </button>
+              <button onClick={onClose} className="text-gray-400 p-2 hover:bg-gray-100 rounded-full">
+                <CloseIcon className="w-6 h-6" />
+              </button>
+            </div>
           </div>
         </div>
 
